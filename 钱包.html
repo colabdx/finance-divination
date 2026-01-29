@@ -1,0 +1,711 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>小钱包 - 网页版</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+			font-family: 'Arial', 'Microsoft YaHei', sans-serif;
+		}
+		
+		body {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			min-height: 100vh;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			padding: 20px;
+		}
+		
+		.wallet-container {
+			background: white;
+			border-radius: 20px;
+			box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+			width: 100%;
+			max-width: 500px;
+			padding: 30px;
+			position: relative;
+			overflow: hidden;
+		}
+		
+		.wallet-header {
+			text-align: center;
+			margin-bottom: 30px;
+			position: relative;
+		}
+		
+		.wallet-header h1 {
+			color: #333;
+			font-size: 28px;
+			font-weight: bold;
+			margin-bottom: 10px;
+		}
+		
+		.balance-display {
+			background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+			color: white;
+			padding: 20px;
+			border-radius: 15px;
+			margin: 20px 0;
+			text-align: center;
+		}
+		
+		.balance-amount {
+			font-size: 36px;
+			font-weight: bold;
+			margin: 10px 0;
+		}
+		
+		.button-grid {
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			gap: 15px;
+			margin: 25px 0;
+		}
+		
+		.btn {
+			padding: 15px;
+			border: none;
+			border-radius: 12px;
+			font-size: 16px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px;
+		}
+		
+		.btn-primary {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+		}
+		
+		.btn-secondary {
+			background: #f0f2f5;
+			color: #333;
+		}
+		
+		.btn:hover {
+			transform: translateY(-3px);
+			box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+		}
+		
+		.bind-status {
+			background: #f8f9fa;
+			padding: 20px;
+			border-radius: 12px;
+			margin: 20px 0;
+			border-left: 5px solid #667eea;
+		}
+		
+		.bind-status h3 {
+			color: #333;
+			margin-bottom: 15px;
+			font-size: 18px;
+		}
+		
+		.bind-item {
+			display: flex;
+			justify-content: space-between;
+			padding: 8px 0;
+			border-bottom: 1px solid #eee;
+		}
+		
+		.bind-item:last-child {
+			border-bottom: none;
+		}
+		
+		.status-badge {
+			padding: 4px 12px;
+			border-radius: 20px;
+			font-size: 14px;
+			font-weight: 600;
+		}
+		
+		.status-bound {
+			background: #d4edda;
+			color: #155724;
+		}
+		
+		.status-unbound {
+			background: #f8d7da;
+			color: #721c24;
+		}
+		
+		.transaction-log {
+			margin-top: 30px;
+		}
+		
+		.transaction-log h3 {
+			color: #333;
+			margin-bottom: 15px;
+			font-size: 18px;
+			border-bottom: 2px solid #667eea;
+			padding-bottom: 8px;
+		}
+		
+		.log-container {
+			background: #f8f9fa;
+			border-radius: 12px;
+			padding: 15px;
+			height: 200px;
+			overflow-y: auto;
+			border: 1px solid #dee2e6;
+		}
+		
+		.log-entry {
+			padding: 10px;
+			background: white;
+			margin-bottom: 8px;
+			border-radius: 8px;
+			border-left: 4px solid #667eea;
+			font-size: 14px;
+			box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+		}
+		
+		.modal {
+			display: none;
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background: rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+			justify-content: center;
+			align-items: center;
+		}
+		
+		.modal-content {
+			background: white;
+			padding: 30px;
+			border-radius: 20px;
+			width: 90%;
+			max-width: 400px;
+			box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+		}
+		
+		.modal-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+			margin-bottom: 20px;
+		}
+		
+		.modal-header h2 {
+			color: #333;
+			font-size: 22px;
+		}
+		
+		.close-btn {
+			background: none;
+			border: none;
+			font-size: 24px;
+			cursor: pointer;
+			color: #666;
+		}
+		
+		.radio-group {
+			margin: 20px 0;
+		}
+		
+		.radio-item {
+			display: flex;
+			align-items: center;
+			padding: 12px;
+			margin: 8px 0;
+			background: #f8f9fa;
+			border-radius: 10px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+		
+		.radio-item:hover {
+			background: #e9ecef;
+		}
+		
+		.radio-item input {
+			margin-right: 12px;
+			transform: scale(1.2);
+		}
+		
+		.input-group {
+			margin: 20px 0;
+		}
+		
+		.input-group label {
+			display: block;
+			margin-bottom: 8px;
+			color: #333;
+			font-weight: 600;
+		}
+		
+		.input-group input {
+			width: 100%;
+			padding: 12px;
+			border: 2px solid #dee2e6;
+			border-radius: 10px;
+			font-size: 16px;
+			transition: border-color 0.3s ease;
+		}
+		
+		.input-group input:focus {
+			outline: none;
+			border-color: #667eea;
+		}
+		
+		.modal-actions {
+			display: flex;
+			gap: 15px;
+			margin-top: 25px;
+		}
+		
+		.modal-btn {
+			flex: 1;
+			padding: 12px;
+			border: none;
+			border-radius: 10px;
+			font-size: 16px;
+			font-weight: 600;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+		
+		.modal-btn-confirm {
+			background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+			color: white;
+		}
+		
+		.modal-btn-cancel {
+			background: #6c757d;
+			color: white;
+		}
+		
+		.modal-btn:hover {
+			transform: translateY(-2px);
+			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+		}
+		
+		.notification {
+			position: fixed;
+			top: 20px;
+			right: 20px;
+			padding: 15px 25px;
+			border-radius: 10px;
+			color: white;
+			font-weight: 600;
+			z-index: 1001;
+			animation: slideIn 0.3s ease;
+			box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+		}
+		
+		.notification-success {
+			background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+		}
+		
+		.notification-warning {
+			background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+		}
+		
+		.notification-error {
+			background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+		}
+		
+		@keyframes slideIn {
+			from {
+				transform: translateX(100%);
+				opacity: 0;
+			}
+			to {
+				transform: translateX(0);
+				opacity: 1;
+			}
+		}
+		
+		@media (max-width: 600px) {
+			.wallet-container {
+				padding: 20px;
+			}
+			
+			.button-grid {
+				grid-template-columns: 1fr;
+			}
+			
+			.balance-amount {
+				font-size: 28px;
+			}
+		}
+	</style>
+</head>
+<body>
+	<div class="wallet-container">
+		<div class="wallet-header">
+			<h1>💰 小钱包</h1>
+			<p>网页版 - 轻松管理您的资金</p>
+		</div>
+		
+		<div class="balance-display">
+			<p>当前余额</p>
+			<div class="balance-amount" id="balanceAmount">￥30,000.00</div>
+			<p>初始资金：30,000元人民币</p>
+		</div>
+		
+		<div class="button-grid">
+			<button class="btn btn-primary" onclick="openBindModal()">
+				<span>🔗</span> 绑定支付方式
+			</button>
+			<button class="btn btn-primary" onclick="openWithdrawModal()">
+				<span>💳</span> 提现到银行卡
+			</button>
+			<button class="btn btn-secondary" onclick="openDepositModal()">
+				<span>➕</span> 充值
+			</button>
+			<button class="btn btn-secondary" onclick="showWalletInfo()">
+				<span>ℹ️</span> 查看钱包信息
+			</button>
+		</div>
+		
+		<div class="bind-status">
+			<h3>已绑定支付方式</h3>
+			<div class="bind-item">
+				<span>支付宝</span>
+				<span class="status-badge status-unbound" id="alipayStatus">未绑定</span>
+			</div>
+			<div class="bind-item">
+				<span>微信支付</span>
+				<span class="status-badge status-unbound" id="wechatStatus">未绑定</span>
+			</div>
+			<div class="bind-item">
+				<span>银行卡</span>
+				<span class="status-badge status-unbound" id="bankStatus">未绑定</span>
+			</div>
+		</div>
+		
+		<div class="transaction-log">
+			<h3>📝 交易记录</h3>
+			<div class="log-container" id="transactionLog">
+				<div class="log-entry">系统启动 - 初始余额：￥30,000.00</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- 绑定支付方式模态框 -->
+	<div class="modal" id="bindModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>绑定支付方式</h2>
+				<button class="close-btn" onclick="closeBindModal()">×</button>
+			</div>
+			<p>请选择要绑定的支付方式：</p>
+			<div class="radio-group">
+				<label class="radio-item">
+					<input type="radio" name="bindService" value="支付宝" checked>
+					<span>支付宝</span>
+				</label>
+				<label class="radio-item">
+					<input type="radio" name="bindService" value="微信">
+					<span>微信支付</span>
+				</label>
+				<label class="radio-item">
+					<input type="radio" name="bindService" value="银行卡">
+					<span>银行卡</span>
+				</label>
+			</div>
+			<div class="modal-actions">
+				<button class="modal-btn modal-btn-cancel" onclick="closeBindModal()">取消</button>
+				<button class="modal-btn modal-btn-confirm" onclick="confirmBind()">确认绑定</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 提现模态框 -->
+	<div class="modal" id="withdrawModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>提现到银行卡</h2>
+				<button class="close-btn" onclick="closeWithdrawModal()">×</button>
+			</div>
+			<div class="input-group">
+				<label for="withdrawAmount">提现金额（元）</label>
+				<input type="number" id="withdrawAmount" placeholder="请输入提现金额" min="0" step="0.01">
+			</div>
+			<div class="input-group">
+				<label for="bankAccount">银行卡号</label>
+				<input type="text" id="bankAccount" placeholder="请输入银行卡号">
+			</div>
+			<div class="modal-actions">
+				<button class="modal-btn modal-btn-cancel" onclick="closeWithdrawModal()">取消</button>
+				<button class="modal-btn modal-btn-confirm" onclick="confirmWithdraw()">确认提现</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 充值模态框 -->
+	<div class="modal" id="depositModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>充值</h2>
+				<button class="close-btn" onclick="closeDepositModal()">×</button>
+			</div>
+			<div class="input-group">
+				<label for="depositAmount">充值金额（元）</label>
+				<input type="number" id="depositAmount" placeholder="请输入充值金额" min="0" step="0.01">
+			</div>
+			<div class="radio-group">
+				<label class="radio-item">
+					<input type="radio" name="depositMethod" value="支付宝" checked>
+					<span>支付宝</span>
+				</label>
+				<label class="radio-item">
+					<input type="radio" name="depositMethod" value="微信">
+					<span>微信支付</span>
+				</label>
+				<label class="radio-item">
+					<input type="radio" name="depositMethod" value="银行卡">
+					<span>银行卡</span>
+				</label>
+			</div>
+			<div class="modal-actions">
+				<button class="modal-btn modal-btn-cancel" onclick="closeDepositModal()">取消</button>
+				<button class="modal-btn modal-btn-confirm" onclick="confirmDeposit()">确认充值</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- 钱包信息模态框 -->
+	<div class="modal" id="infoModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>钱包信息</h2>
+				<button class="close-btn" onclick="closeInfoModal()">×</button>
+			</div>
+			<div class="bind-status">
+				<div class="bind-item">
+					<span>钱包余额</span>
+					<span id="infoBalance">￥30,000.00</span>
+				</div>
+				<div class="bind-item">
+					<span>支付宝绑定状态</span>
+					<span id="infoAlipay">未绑定</span>
+				</div>
+				<div class="bind-item">
+					<span>微信支付绑定状态</span>
+					<span id="infoWechat">未绑定</span>
+				</div>
+				<div class="bind-item">
+					<span>银行卡绑定状态</span>
+					<span id="infoBank">未绑定</span>
+				</div>
+			</div>
+			<div class="modal-actions">
+				<button class="modal-btn modal-btn-confirm" onclick="closeInfoModal()">确定</button>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		// NOTE: 初始化钱包数据
+		let walletData = {
+			balance: 30000.00,
+			alipayBound: false,
+			wechatBound: false,
+			bankBound: false,
+			transactions: ['系统启动 - 初始余额：￥30,000.00']
+		};
+
+		// NOTE: 显示通知函数
+		function showNotification(message, type = 'success') {
+			const notification = document.createElement('div');
+			notification.className = `notification notification-${type}`;
+			notification.textContent = message;
+			document.body.appendChild(notification);
+			
+			setTimeout(() => {
+				notification.remove();
+			}, 3000);
+		}
+
+		// NOTE: 更新余额显示
+		function updateBalanceDisplay() {
+			document.getElementById('balanceAmount').textContent = `￥${walletData.balance.toLocaleString('zh-CN', {minimumFractionDigits: 2})}`;
+			document.getElementById('infoBalance').textContent = `￥${walletData.balance.toLocaleString('zh-CN', {minimumFractionDigits: 2})}`;
+		}
+
+		// NOTE: 添加交易记录
+		function addTransaction(description) {
+			const timestamp = new Date().toLocaleString('zh-CN');
+			const logEntry = `${timestamp} - ${description}`;
+			walletData.transactions.unshift(logEntry);
+			
+			const logContainer = document.getElementById('transactionLog');
+			const newEntry = document.createElement('div');
+			newEntry.className = 'log-entry';
+			newEntry.textContent = logEntry;
+			logContainer.insertBefore(newEntry, logContainer.firstChild);
+			
+			// 限制最多显示10条记录
+			if (walletData.transactions.length > 10) {
+				walletData.transactions.pop();
+				if (logContainer.children.length > 10) {
+					logContainer.removeChild(logContainer.lastChild);
+				}
+			}
+		}
+
+		// NOTE: 绑定支付方式相关函数
+		function openBindModal() {
+			document.getElementById('bindModal').style.display = 'flex';
+		}
+
+		function closeBindModal() {
+			document.getElementById('bindModal').style.display = 'none';
+		}
+
+		function confirmBind() {
+			const selectedService = document.querySelector('input[name="bindService"]:checked').value;
+			let statusElement, infoElement;
+			
+			switch(selectedService) {
+				case '支付宝':
+					statusElement = document.getElementById('alipayStatus');
+					infoElement = document.getElementById('infoAlipay');
+					walletData.alipayBound = true;
+					break;
+				case '微信':
+					statusElement = document.getElementById('wechatStatus');
+					infoElement = document.getElementById('infoWechat');
+					walletData.wechatBound = true;
+					break;
+				case '银行卡':
+					statusElement = document.getElementById('bankStatus');
+					infoElement = document.getElementById('infoBank');
+					walletData.bankBound = true;
+					break;
+			}
+			
+			statusElement.textContent = '已绑定';
+			statusElement.className = 'status-badge status-bound';
+			infoElement.textContent = '已绑定';
+			
+			addTransaction(`绑定${selectedService}支付方式`);
+			showNotification(`${selectedService}绑定成功！`, 'success');
+			closeBindModal();
+		}
+
+		// NOTE: 提现相关函数
+		function openWithdrawModal() {
+			if (!walletData.bankBound) {
+				showNotification('请先绑定银行卡', 'warning');
+				return;
+			}
+			document.getElementById('withdrawAmount').value = '';
+			document.getElementById('bankAccount').value = '';
+			document.getElementById('withdrawModal').style.display = 'flex';
+		}
+
+		function closeWithdrawModal() {
+			document.getElementById('withdrawModal').style.display = 'none';
+		}
+
+		function confirmWithdraw() {
+			const amount = parseFloat(document.getElementById('withdrawAmount').value);
+			const bankAccount = document.getElementById('bankAccount').value.trim();
+			
+			if (!amount || amount <= 0) {
+				showNotification('请输入有效的提现金额', 'error');
+				return;
+			}
+			
+			if (amount > walletData.balance) {
+				showNotification('余额不足', 'error');
+				return;
+			}
+			
+			if (!bankAccount) {
+				showNotification('请输入银行卡号', 'error');
+				return;
+			}
+			
+			if (!/^\d{7,24}$/.test(bankAccount)) {
+				showNotification('请输入有效的银行卡号', 'error');
+				return;
+			}
+			
+			walletData.balance -= amount;
+			updateBalanceDisplay();
+			addTransaction(`提现到银行卡(${bankAccount.slice(-4)})：-￥${amount.toFixed(2)}`);
+			showNotification(`成功提现￥${amount.toFixed(2)}`, 'success');
+			closeWithdrawModal();
+		}
+
+		// NOTE: 充值相关函数
+		function openDepositModal() {
+			document.getElementById('depositAmount').value = '';
+			document.getElementById('depositModal').style.display = 'flex';
+		}
+
+		function closeDepositModal() {
+			document.getElementById('depositModal').style.display = 'none';
+		}
+
+		function confirmDeposit() {
+			const amount = parseFloat(document.getElementById('depositAmount').value);
+			const method = document.querySelector('input[name="depositMethod"]:checked').value;
+			
+			if (!amount || amount <= 0) {
+				showNotification('请输入有效的充值金额', 'error');
+				return;
+			}
+			
+			if (amount > 50000) {
+				showNotification('单次充值金额不能超过50,000元', 'error');
+				return;
+			}
+			
+			walletData.balance += amount;
+			updateBalanceDisplay();
+			addTransaction(`通过${method}充值：+￥${amount.toFixed(2)}`);
+			showNotification(`成功充值￥${amount.toFixed(2)}`, 'success');
+			closeDepositModal();
+		}
+
+		// NOTE: 钱包信息相关函数
+		function showWalletInfo() {
+			document.getElementById('infoModal').style.display = 'flex';
+		}
+
+		function closeInfoModal() {
+			document.getElementById('infoModal').style.display = 'none';
+		}
+
+		// NOTE: 全局点击事件处理 - 点击模态框外部关闭
+		window.onclick = function(event) {
+			const modals = document.querySelectorAll('.modal');
+			modals.forEach(modal => {
+				if (event.target === modal) {
+					modal.style.display = 'none';
+				}
+			});
+		}
+
+		// NOTE: 键盘事件处理 - ESC键关闭模态框
+		document.addEventListener('keydown', function(event) {
+			if (event.key === 'Escape') {
+				const modals = document.querySelectorAll('.modal');
+				modals.forEach(modal => {
+					if (modal.style.display === 'flex') {
+						modal.style.display = 'none';
+					}
+				});
+			}
+		});
+	</script>
+</body>
+</html>
