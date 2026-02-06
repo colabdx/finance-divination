@@ -168,6 +168,33 @@
 			border-left: 4px solid #667eea;
 			font-size: 14px;
 			box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		
+		.log-details {
+			flex: 1;
+		}
+		
+		.log-actions {
+			margin-left: 10px;
+		}
+		
+		.btn-receipt {
+			padding: 4px 12px;
+			background: #28a745;
+			color: white;
+			border: none;
+			border-radius: 4px;
+			font-size: 12px;
+			cursor: pointer;
+			transition: all 0.3s ease;
+		}
+		
+		.btn-receipt:hover {
+			background: #218838;
+			transform: translateY(-1px);
 		}
 		
 		.modal {
@@ -318,6 +345,62 @@
 			background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
 		}
 		
+		.receipt-modal .modal-content {
+			max-width: 350px;
+			padding: 25px;
+		}
+		
+		.receipt-container {
+			background: white;
+			border: 2px dashed #dee2e6;
+			border-radius: 10px;
+			padding: 20px;
+			margin: 20px 0;
+			font-family: 'Courier New', monospace;
+		}
+		
+		.receipt-header {
+			text-align: center;
+			margin-bottom: 15px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #dee2e6;
+		}
+		
+		.receipt-header h3 {
+			color: #333;
+			font-size: 18px;
+			margin-bottom: 5px;
+		}
+		
+		.receipt-item {
+			display: flex;
+			justify-content: space-between;
+			margin: 8px 0;
+			font-size: 14px;
+		}
+		
+		.receipt-label {
+			color: #666;
+		}
+		
+		.receipt-value {
+			color: #333;
+			font-weight: 600;
+		}
+		
+		.receipt-divider {
+			height: 1px;
+			background: #dee2e6;
+			margin: 15px 0;
+		}
+		
+		.receipt-footer {
+			text-align: center;
+			margin-top: 15px;
+			color: #666;
+			font-size: 12px;
+		}
+		
 		@keyframes slideIn {
 			from {
 				transform: translateX(100%);
@@ -340,6 +423,17 @@
 			
 			.balance-amount {
 				font-size: 28px;
+			}
+			
+			.log-entry {
+				flex-direction: column;
+				align-items: flex-start;
+			}
+			
+			.log-actions {
+				margin-left: 0;
+				margin-top: 8px;
+				align-self: flex-end;
 			}
 		}
 	</style>
@@ -391,7 +485,9 @@
 		<div class="transaction-log">
 			<h3>📝 交易记录</h3>
 			<div class="log-container" id="transactionLog">
-				<div class="log-entry">系统启动 - 初始余额：￥30,000.00</div>
+				<div class="log-entry">
+					<div class="log-details">系统启动 - 初始余额：￥30,000.00</div>
+				</div>
 			</div>
 		</div>
 	</div>
@@ -452,6 +548,7 @@
 		<div class="modal-content">
 			<div class="modal-header">
 				<h2>充值</h2>
+				<button class="close-btn" onclick="closeDepositModal()
 				<button class="close-btn" onclick="closeDepositModal()">×</button>
 			</div>
 			<div class="input-group">
@@ -510,6 +607,65 @@
 		</div>
 	</div>
 
+	<!-- 提现小票模态框 -->
+	<div class="modal receipt-modal" id="receiptModal">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h2>提现小票</h2>
+				<button class="close-btn" onclick="closeReceiptModal()">×</button>
+			</div>
+			<div class="receipt-container" id="receiptContent">
+				<div class="receipt-header">
+					<h3>全球投资钱包</h3>
+					<p>电子提现凭证</p>
+				</div>
+				<div class="receipt-item">
+					<span class="receipt-label">交易编号：</span>
+					<span class="receipt-value" id="receiptId">WD20230001</span>
+				</div>
+				<div class="receipt-item">
+					<span class="receipt-label">交易时间：</span>
+					<span class="receipt-value" id="receiptTime">2023-01-01 10:30:00</span>
+				</div>
+				<div class="receipt-divider"></div>
+				<div class="receipt-item">
+					<span class="receipt-label">提现金额：</span>
+					<span class="receipt-value" id="receiptAmount">￥0.00</span>
+				</div>
+				<div class="receipt-item">
+					<span class="receipt-label">手续费：</span>
+					<span class="receipt-value" id="receiptFee">￥0.00</span>
+				</div>
+				<div class="receipt-item">
+					<span class="receipt-label">实到金额：</span>
+					<span class="receipt-value" id="receiptNetAmount">￥0.00</span>
+				</div>
+				<div class="receipt-divider"></div>
+				<div class="receipt-item">
+					<span class="receipt-label">收款银行：</span>
+					<span class="receipt-value" id="receiptBank">未指定</span>
+				</div>
+				<div class="receipt-item">
+					<span class="receipt-label">收款账号：</span>
+					<span class="receipt-value" id="receiptAccount">**** **** **** 0000</span>
+				</div>
+				<div class="receipt-item">
+					<span class="receipt-label">交易状态：</span>
+					<span class="receipt-value" id="receiptStatus">已完成</span>
+				</div>
+				<div class="receipt-divider"></div>
+				<div class="receipt-footer">
+					<p>此凭证可作为交易证明</p>
+					<p>客服电话：400-805-0255</p>
+				</div>
+			</div>
+			<div class="modal-actions">
+				<button class="modal-btn modal-btn-confirm" onclick="printReceipt()">打印小票</button>
+				<button class="modal-btn modal-btn-cancel" onclick="closeReceiptModal()">关闭</button>
+			</div>
+		</div>
+	</div>
+
 	<script>
 		// NOTE: 初始化钱包数据
 		let walletData = {
@@ -517,7 +673,9 @@
 			alipayBound: false,
 			wechatBound: false,
 			bankBound: false,
-			transactions: ['系统启动 - 初始余额：￥30,000.00']
+			transactions: ['系统启动 - 初始余额：￥30,000.00'],
+			// NOTE: 新增提现记录数组，存储详细的小票信息
+			withdrawReceipts: []
 		};
 
 		// NOTE: 显示通知函数
@@ -539,7 +697,7 @@
 		}
 
 		// NOTE: 添加交易记录
-		function addTransaction(description) {
+		function addTransaction(description, receiptId = null) {
 			const timestamp = new Date().toLocaleString('zh-CN');
 			const logEntry = `${timestamp} - ${description}`;
 			walletData.transactions.unshift(logEntry);
@@ -547,7 +705,13 @@
 			const logContainer = document.getElementById('transactionLog');
 			const newEntry = document.createElement('div');
 			newEntry.className = 'log-entry';
-			newEntry.textContent = logEntry;
+			
+			// NOTE: 修改日志条目结构，添加查看小票按钮
+			newEntry.innerHTML = `
+				<div class="log-details">${logEntry}</div>
+				${receiptId ? `<div class="log-actions"><button class="btn-receipt" onclick="showReceipt('${receiptId}')">查看小票</button></div>` : ''}
+			`;
+			
 			logContainer.insertBefore(newEntry, logContainer.firstChild);
 			
 			// 限制最多显示10条记录
@@ -557,6 +721,24 @@
 					logContainer.removeChild(logContainer.lastChild);
 				}
 			}
+		}
+
+		// NOTE: 生成交易编号
+		function generateTransactionId() {
+			const now = new Date();
+			const year = now.getFullYear();
+			const month = String(now.getMonth() + 1).padStart(2, '0');
+			const day = String(now.getDate()).padStart(2, '0');
+			const random = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+			return `WD${year}${month}${day}${random}`;
+		}
+
+		// NOTE: 计算手续费（模拟银行手续费）
+		function calculateFee(amount) {
+			// 手续费规则：0-1000元免费，1000元以上收取0.1%，最高50元
+			if (amount <= 1000) return 0;
+			const fee = amount * 0.001;
+			return Math.min(fee, 50);
 		}
 
 		// NOTE: 绑定支付方式相关函数
@@ -638,10 +820,37 @@
 				return;
 			}
 			
+			// NOTE: 计算手续费和实到金额
+			const fee = calculateFee(amount);
+			const netAmount = amount - fee;
+			
+			// NOTE: 生成交易编号
+			const transactionId = generateTransactionId();
+			
+			// NOTE: 更新余额
 			walletData.balance -= amount;
 			updateBalanceDisplay();
-			addTransaction(`提现到银行卡(${bankAccount.slice(-4)})：-￥${amount.toFixed(2)}`);
-			showNotification(`成功提现￥${amount.toFixed(2)}`, 'success');
+			
+			// NOTE: 创建小票数据对象
+			const receiptData = {
+				id: transactionId,
+				time: new Date().toLocaleString('zh-CN'),
+				amount: amount,
+				fee: fee,
+				netAmount: netAmount,
+				bankAccount: bankAccount,
+				bankName: '收款银行', // 这里可以扩展为根据卡号识别银行
+				status: '已完成'
+			};
+			
+			// NOTE: 保存小票数据
+			walletData.withdrawReceipts.push(receiptData);
+			
+			// NOTE: 修改交易记录描述，包含尾号和交易编号
+			const lastFourDigits = bankAccount.slice(-4);
+			addTransaction(`提现到银行卡(尾号${lastFourDigits})：-￥${amount.toFixed(2)} [${transactionId}]`, transactionId);
+			
+			showNotification(`成功提现￥${amount.toFixed(2)}，实到￥${netAmount.toFixed(2)}`, 'success');
 			closeWithdrawModal();
 		}
 
@@ -664,7 +873,6 @@
 				return;
 			}
 			
-			
 			walletData.balance += amount;
 			updateBalanceDisplay();
 			addTransaction(`通过${method}充值：+￥${amount.toFixed(2)}`);
@@ -679,6 +887,68 @@
 
 		function closeInfoModal() {
 			document.getElementById('infoModal').style.display = 'none';
+		}
+
+		// NOTE: 提现小票相关函数
+		function showReceipt(receiptId) {
+			// NOTE: 查找对应的小票数据
+			const receipt = walletData.withdrawReceipts.find(r => r.id === receiptId);
+			if (!receipt) {
+				showNotification('未找到对应的小票信息', 'error');
+				return;
+			}
+			
+			// NOTE: 填充小票内容
+			document.getElementById('receiptId').textContent = receipt.id;
+			document.getElementById('receiptTime').textContent = receipt.time;
+			document.getElementById('receiptAmount').textContent = `￥${receipt.amount.toFixed(2)}`;
+			document.getElementById('receiptFee').textContent = `￥${receipt.fee.toFixed(2)}`;
+			document.getElementById('receiptNetAmount').textContent = `￥${receipt.netAmount.toFixed(2)}`;
+			document.getElementById('receiptBank').textContent = receipt.bankName;
+			document.getElementById('receiptAccount').textContent = `**** **** **** ${receipt.bankAccount.slice(-4)}`;
+			document.getElementById('receiptStatus').textContent = receipt.status;
+			
+			// NOTE: 显示小票模态框
+			document.getElementById('receiptModal').style.display = 'flex';
+		}
+
+		function closeReceiptModal() {
+			document.getElementById('receiptModal').style.display = 'none';
+		}
+
+		function printReceipt() {
+			// NOTE: 打印小票功能
+			const receiptContent = document.getElementById('receiptContent').innerHTML;
+			const printWindow = window.open('', '_blank');
+			printWindow.document.write(`
+				<!DOCTYPE html>
+				<html>
+				<head>
+					<title>提现小票 - 打印</title>
+					<style>
+						body { font-family: 'Courier New', monospace; padding: 20px; }
+						.receipt-container { border: 1px solid #000; padding: 20px; max-width: 300px; margin: 0 auto; }
+						.receipt-header { text-align: center; margin-bottom: 15px; }
+						.receipt-item { display: flex; justify-content: space-between; margin: 5px 0; }
+						.receipt-divider { border-top: 1px dashed #000; margin: 10px 0; }
+						.receipt-footer { text-align: center; font-size: 12px; margin-top: 15px; }
+						@media print {
+							button { display: none; }
+						}
+					</style>
+				</head>
+				<body>
+					<div class="receipt-container">
+						${receiptContent}
+					</div>
+					<div style="text-align: center; margin-top: 20px;">
+						<button onclick="window.print()">打印</button>
+						<button onclick="window.close()">关闭</button>
+					</div>
+				</body>
+				</html>
+			`);
+			printWindow.document.close();
 		}
 
 		// NOTE: 全局点击事件处理 - 点击模态框外部关闭
