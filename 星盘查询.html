@@ -227,6 +227,16 @@
             color: white;
         }
 
+        .aspect-150 {
+            background: #9b59b6;
+            color: white;
+        }
+
+        .aspect-semisextile {
+            background: #f39c12;
+            color: white;
+        }
+
         .error-message {
             background: #fee;
             border: 1px solid #fcc;
@@ -365,9 +375,14 @@
         // 安全的DOM元素获取函数
         function safeGetElement(id) {
             try {
+                if (!id || typeof id !== 'string') {
+                    console.error('无效的元素ID:', id);
+                    return null;
+                }
                 const el = document.getElementById(id);
                 if (!el) {
-                    throw new Error(`元素 ${id} 未找到`);
+                    console.error(`元素 ${id} 未找到`);
+                    return null;
                 }
                 return el;
             } catch (e) {
@@ -399,7 +414,7 @@
         ];
 
         // 相位类型列表
-        const aspectTypes = ["合相", "对分相", "三合相", "四分相", "六合相"];
+        const aspectTypes = ["合相", "对分相", "三合相", "四分相", "六合相", "150度相位", "拱相位"];
 
         // 相位解释模板
         const aspectExplanations = {
@@ -407,16 +422,26 @@
             "对分相": ["存在内在张力，需要寻找平衡", "代表对极之间的冲突与整合", "需要在两股力量间寻找平衡点"],
             "三合相": ["和谐流畅的能量流动", "天赋与能力的顺利表达", "代表机遇和积极的发展"],
             "四分相": ["代表挑战和成长的机会", "需要克服的内在冲突", "通过努力可以转化为动力"],
-            "六合相": ["温和而有利的相位", "带来和谐与合作的机会", "轻松发挥各自的潜能"]
+            "六合相": ["温和而有利的相位", "带来和谐与合作的机会", "轻松发挥各自的潜能"],
+            "150度相位": ["前世的关系与业力连接", "灵魂深处的记忆与缘分", "从过去生命带来的课题与礼物", "需要化解的前世业力"],
+            "拱相位": ["度数相差5-8度的微细相位，潜藏的机遇", "细微但持续的内在影响，需要细心觉察", "代表细微的成长契机和能量共振", "需要耐心培养的潜在可能性"]
         };
 
         // 随机数生成函数
         function getRandomInt(min, max) {
+            if (typeof min !== 'number' || typeof max !== 'number') {
+                console.error(' getRandomInt: 无效的参数', min, max);
+                return 0;
+            }
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
 
         // 从数组中随机选择一个元素
         function getRandomElement(array) {
+            if (!array || !Array.isArray(array) || array.length === 0) {
+                console.error('getRandomElement: 无效的数组', array);
+                return '';
+            }
             return array[getRandomInt(0, array.length - 1)];
         }
 
@@ -426,12 +451,16 @@
                 const result = {};
 
                 // 为每个行星生成随机位置
-                for (const planet of planets) {
-                    result[planet] = {
-                        "星座": getRandomElement(zodiacSigns),
-                        "宫位": getRandomElement(houses),
-                        "度数": Math.random() * 30  // 0-30度
-                    };
+                if (Array.isArray(planets)) {
+                    for (const planet of planets) {
+                        if (planet && typeof planet === 'string') {
+                            result[planet] = {
+                                "星座": getRandomElement(zodiacSigns),
+                                "宫位": getRandomElement(houses),
+                                "度数": Math.random() * 30  // 0-30度
+                            };
+                        }
+                    }
                 }
 
                 // 生成随机相位（选择5-8个随机行星对）
@@ -439,12 +468,17 @@
                 const numAspects = getRandomInt(5, 8);
                 const usedPairs = new Set();
 
-                while (aspects.length < numAspects) {
+                let attempts = 0;
+                const maxAttempts = 100;
+
+                while (aspects.length < numAspects && attempts < maxAttempts) {
+                    attempts++;
+                    
                     const planet1 = getRandomElement(planets);
                     const planet2 = getRandomElement(planets);
 
                     // 确保不是同一个行星
-                    if (planet1 === planet2) continue;
+                    if (planet1 === planet2 || !planet1 || !planet2) continue;
 
                     // 创建唯一键来避免重复
                     const pairKey = [planet1, planet2].sort().join('-');
@@ -453,12 +487,15 @@
 
                     const phase = getRandomElement(aspectTypes);
                     const explanations = aspectExplanations[phase];
-                    aspects.push({
-                        "行星1": planet1,
-                        "行星2": planet2,
-                        "相位": phase,
-                        "解释": getRandomElement(explanations)
-                    });
+                    
+                    if (explanations && Array.isArray(explanations) && explanations.length > 0) {
+                        aspects.push({
+                            "行星1": planet1,
+                            "行星2": planet2,
+                            "相位": phase,
+                            "解释": getRandomElement(explanations)
+                        });
+                    }
                 }
 
                 return { planets: result, aspects: aspects };
@@ -479,9 +516,12 @@
                     "对分相": "aspect-opposition",
                     "三合相": "aspect-trine",
                     "四分相": "aspect-square",
-                    "六合相": "aspect-sextile"
+                    "六合相": "aspect-sextile",
+                    "150度相位": "aspect-150",
+                    "拱相位": "aspect-semisextile"
                 };
-                return aspectClasses[phase] || "";
+                const className = aspectClasses[phase];
+                return className || "";
             } catch (e) {
                 console.error('获取相位样式失败:', e);
                 return '';
@@ -494,25 +534,38 @@
                 const tabs = document.querySelectorAll('.tab');
                 const tabContents = document.querySelectorAll('.tab-content');
 
-                if (!tabs || !tabContents) {
-                    throw new Error('标签页元素未找到');
+                if (tabs && Array.isArray(tabs) && tabs.length > 0) {
+                    tabs.forEach(tab => {
+                        if (tab && typeof tab.classList !== 'undefined') {
+                            tab.classList.remove('active');
+                        }
+                    });
                 }
 
-                tabs.forEach(tab => {
-                    if (tab) tab.classList.remove('active');
-                });
-                tabContents.forEach(content => {
-                    if (content) content.classList.remove('active');
-                });
+                if (tabContents && Array.isArray(tabContents) && tabContents.length > 0) {
+                    tabContents.forEach(content => {
+                        if (content && typeof content.classList !== 'undefined') {
+                            content.classList.remove('active');
+                        }
+                    });
+                }
 
                 if (tabName === 'planets') {
-                    if (tabs[0]) tabs[0].classList.add('active');
+                    if (tabs && tabs[0]) {
+                        tabs[0].classList.add('active');
+                    }
                     const planetsTab = safeGetElement('planetsTab');
-                    if (planetsTab) planetsTab.classList.add('active');
+                    if (planetsTab && typeof planetsTab.classList !== 'undefined') {
+                        planetsTab.classList.add('active');
+                    }
                 } else {
-                    if (tabs[1]) tabs[1].classList.add('active');
+                    if (tabs && tabs[1]) {
+                        tabs[1].classList.add('active');
+                    }
                     const aspectsTab = safeGetElement('aspectsTab');
-                    if (aspectsTab) aspectsTab.classList.add('active');
+                    if (aspectsTab && typeof aspectsTab.classList !== 'undefined') {
+                        aspectsTab.classList.add('active');
+                    }
                 }
             } catch (e) {
                 console.error('切换标签页失败:', e);
@@ -524,12 +577,16 @@
         function showError(message) {
             try {
                 const errorEl = safeGetElement('errorMessage');
-                if (errorEl) {
+                if (errorEl && typeof errorEl.classList !== 'undefined') {
                     errorEl.textContent = message || '发生未知错误';
                     errorEl.classList.add('show');
                     setTimeout(() => {
-                        errorEl.classList.remove('show');
+                        if (errorEl.classList) {
+                            errorEl.classList.remove('show');
+                        }
                     }, 5000);
+                } else {
+                    console.error('无法显示错误信息:', message);
                 }
             } catch (e) {
                 console.error('显示错误信息失败:', e);
@@ -562,30 +619,36 @@
                 const loadingEl = safeGetElement('loading');
                 const resultsSectionEl = safeGetElement('resultsSection');
                 
-                if (loadingEl) loadingEl.classList.add('show');
-                if (resultsSectionEl) resultsSectionEl.classList.remove('active');
+                if (loadingEl && typeof loadingEl.classList !== 'undefined') {
+                    loadingEl.classList.add('show');
+                }
+                if (resultsSectionEl && typeof resultsSectionEl.classList !== 'undefined') {
+                    resultsSectionEl.classList.remove('active');
+                }
 
                 // 模拟计算延迟
                 setTimeout(() => {
                     try {
                         const result = calculateNatalChart(birthDate, birthTime, birthPlace);
-                        const planets = result?.planets || {};
-                        const aspects = result?.aspects || [];
+                        const planets = result && result.planets ? result.planets : {};
+                        const aspects = result && result.aspects ? result.aspects : [];
 
                         // 填充行星表格
                         const planetsBody = safeGetElement('planetsBody');
                         if (planetsBody) {
                             planetsBody.innerHTML = '';
-                            for (const [planet, info] of Object.entries(planets)) {
-                                if (!info) continue;
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td class="planet-name">${planet || ''}</td>
-                                    <td class="zodiac-sign">${info.星座 || ''}</td>
-                                    <td class="house">${info.宫位 || ''}</td>
-                                    <td class="degree">${typeof info.度数 === 'number' ? info.度数.toFixed(1) + '°' : ''}</td>
-                                `;
-                                planetsBody.appendChild(row);
+                            if (typeof Object.entries === 'function') {
+                                for (const [planet, info] of Object.entries(planets)) {
+                                    if (!info) continue;
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td class="planet-name">${planet || ''}</td>
+                                        <td class="zodiac-sign">${info.星座 || ''}</td>
+                                        <td class="house">${info.宫位 || ''}</td>
+                                        <td class="degree">${typeof info.度数 === 'number' ? info.度数.toFixed(1) + '°' : ''}</td>
+                                    `;
+                                    planetsBody.appendChild(row);
+                                }
                             }
                         }
 
@@ -593,26 +656,34 @@
                         const aspectsBody = safeGetElement('aspectsBody');
                         if (aspectsBody) {
                             aspectsBody.innerHTML = '';
-                            for (const aspect of aspects) {
-                                if (!aspect) continue;
-                                const row = document.createElement('tr');
-                                row.innerHTML = `
-                                    <td class="planet-name">${aspect.行星1 || ''}</td>
-                                    <td class="planet-name">${aspect.行星2 || ''}</td>
-                                    <td><span class="aspect-type ${getAspectClass(aspect.相位)}">${aspect.相位 || ''}</span></td>
-                                    <td>${aspect.解释 || ''}</td>
-                                `;
-                                aspectsBody.appendChild(row);
+                            if (Array.isArray(aspects)) {
+                                for (const aspect of aspects) {
+                                    if (!aspect) continue;
+                                    const row = document.createElement('tr');
+                                    row.innerHTML = `
+                                        <td class="planet-name">${aspect.行星1 || ''}</td>
+                                        <td class="planet-name">${aspect.行星2 || ''}</td>
+                                        <td><span class="aspect-type ${getAspectClass(aspect.相位)}">${aspect.相位 || ''}</span></td>
+                                        <td>${aspect.解释 || ''}</td>
+                                    `;
+                                    aspectsBody.appendChild(row);
+                                }
                             }
                         }
 
                         // 显示结果
-                        if (loadingEl) loadingEl.classList.remove('show');
-                        if (resultsSectionEl) resultsSectionEl.classList.add('active');
+                        if (loadingEl && typeof loadingEl.classList !== 'undefined') {
+                            loadingEl.classList.remove('show');
+                        }
+                        if (resultsSectionEl && typeof resultsSectionEl.classList !== 'undefined') {
+                            resultsSectionEl.classList.add('active');
+                        }
 
                     } catch (e) {
                         console.error('处理查询结果失败:', e);
-                        if (loadingEl) loadingEl.classList.remove('show');
+                        if (loadingEl && typeof loadingEl.classList !== 'undefined') {
+                            loadingEl.classList.remove('show');
+                        }
                         showError('计算星盘时发生错误: ' + e.message);
                     }
                 }, 1000);
@@ -627,7 +698,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             try {
                 const birthDateEl = safeGetElement('birthDate');
-                if (birthDateEl) {
+                if (birthDateEl && typeof birthDateEl.value !== 'undefined') {
                     const today = new Date();
                     const year = today.getFullYear();
                     const month = String(today.getMonth() + 1).padStart(2, '0');
